@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios');
 
 const API_BASE_URL = '/api';
 
@@ -78,4 +78,4 @@ const taskService = {
   }
 };
 
-export default taskService;
+module.exports = taskService;

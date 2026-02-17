@@ -51,7 +51,8 @@ describe('TaskForm Component', () => {
 
       // Priority dropdown should show medium as selected
       // Note: MUI Select components can be tricky to test, but we can verify the value
-      expect(screen.getByText('Priority')).toBeInTheDocument();
+      const priorityLabels = screen.queryAllByText('Priority');
+      expect(priorityLabels.length).toBeGreaterThan(0);
     });
   });
 
@@ -97,7 +98,7 @@ describe('TaskForm Component', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/Task title is required/)).toBeInTheDocument();
+        expect(screen.queryAllByText(/Task title is required/)).not.toEqual([]);
       });
     });
 
@@ -172,7 +173,7 @@ describe('TaskForm Component', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/Task title is required/)).toBeInTheDocument();
+        expect(screen.queryAllByText(/Task title is required/)).not.toEqual([]);
       });
 
       // Start typing
@@ -230,10 +231,15 @@ describe('TaskForm Component', () => {
         <TaskForm open={true} task={null} onSubmit={mockOnSubmit} onClose={mockOnClose} />
       );
 
-      expect(screen.getByText('Task Title')).toBeInTheDocument();
-      expect(screen.getByText('Description (Optional)')).toBeInTheDocument();
-      expect(screen.getByText('Priority')).toBeInTheDocument();
-      expect(screen.getByText('Category (Optional)')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Task Title/ })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Description/ })).toBeInTheDocument();
+      
+      // For Select components, check if labels are present
+      const priorityLabels = screen.queryAllByText('Priority');
+      expect(priorityLabels.length).toBeGreaterThan(0);
+      
+      const categoryLabels = screen.queryAllByText('Category (Optional)');
+      expect(categoryLabels.length).toBeGreaterThan(0);
     });
 
     it('should have proper dialog title', () => {

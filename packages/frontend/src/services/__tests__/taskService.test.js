@@ -1,7 +1,9 @@
+const taskService = require('../taskService');
+const axios = require('axios');
+
 jest.mock('axios');
 
-import taskService from '../taskService';
-import axios from 'axios';
+const mockApiClient = jest.requireMock('axios').__mockApiClient;
 
 describe('Task Service', () => {
   const mockTasks = [
@@ -35,37 +37,41 @@ describe('Task Service', () => {
 
   describe('getTasks', () => {
     it('should fetch all tasks', async () => {
-      axios.get.mockResolvedValue({ data: mockTasks });
+      mockApiClient.get.mockResolvedValue({ data: mockTasks });
 
       const result = await taskService.getTasks();
 
-      expect(axios.get).toHaveBeenCalledWith('/tasks');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/tasks');
       expect(result).toEqual(mockTasks);
     });
 
     it('should handle errors when fetching tasks', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const mockError = new Error('Network error');
-      axios.get.mockRejectedValue(mockError);
+      mockApiClient.get.mockRejectedValue(mockError);
 
       await expect(taskService.getTasks()).rejects.toThrow('Network error');
+      consoleSpy.mockRestore();
     });
   });
 
   describe('getTask', () => {
     it('should fetch a single task by id', async () => {
-      axios.get.mockResolvedValue({ data: mockTasks[0] });
+      mockApiClient.get.mockResolvedValue({ data: mockTasks[0] });
 
       const result = await taskService.getTask(1);
 
-      expect(axios.get).toHaveBeenCalledWith('/tasks/1');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/tasks/1');
       expect(result).toEqual(mockTasks[0]);
     });
 
     it('should handle errors when fetching a task', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const mockError = new Error('Task not found');
-      axios.get.mockRejectedValue(mockError);
+      mockApiClient.get.mockRejectedValue(mockError);
 
       await expect(taskService.getTask(999)).rejects.toThrow('Task not found');
+      consoleSpy.mockRestore();
     });
   });
 
@@ -80,31 +86,35 @@ describe('Task Service', () => {
       };
 
       const createdTask = { id: 3, ...newTaskData, completed: false, createdAt: '2026-02-13T10:00:00Z', updatedAt: '2026-02-13T10:00:00Z' };
-      axios.post.mockResolvedValue({ data: createdTask });
+      mockApiClient.post.mockResolvedValue({ data: createdTask });
 
       const result = await taskService.createTask(newTaskData);
 
-      expect(axios.post).toHaveBeenCalledWith('/tasks', newTaskData);
+      expect(mockApiClient.post).toHaveBeenCalledWith('/tasks', newTaskData);
       expect(result).toEqual(createdTask);
     });
 
     it('should handle validation errors when creating task', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const invalidTaskData = {
         title: '',
         priority: 'invalid'
       };
 
       const mockError = new Error('Validation failed');
-      axios.post.mockRejectedValue(mockError);
+      mockApiClient.post.mockRejectedValue(mockError);
 
       await expect(taskService.createTask(invalidTaskData)).rejects.toThrow('Validation failed');
+      consoleSpy.mockRestore();
     });
 
     it('should handle server errors when creating task', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const mockError = new Error('Server error');
-      axios.post.mockRejectedValue(mockError);
+      mockApiClient.post.mockRejectedValue(mockError);
 
       await expect(taskService.createTask({ title: 'Test' })).rejects.toThrow('Server error');
+      consoleSpy.mockRestore();
     });
   });
 
@@ -113,30 +123,32 @@ describe('Task Service', () => {
       const updateData = { title: 'Updated Title', completed: true };
       const updatedTask = { ...mockTasks[0], ...updateData };
 
-      axios.put.mockResolvedValue({ data: updatedTask });
+      mockApiClient.put.mockResolvedValue({ data: updatedTask });
 
       const result = await taskService.updateTask(1, updateData);
 
-      expect(axios.put).toHaveBeenCalledWith('/tasks/1', updateData);
+      expect(mockApiClient.put).toHaveBeenCalledWith('/tasks/1', updateData);
       expect(result).toEqual(updatedTask);
     });
 
     it('should handle errors when updating task', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const mockError = new Error('Task not found');
-      axios.put.mockRejectedValue(mockError);
+      mockApiClient.put.mockRejectedValue(mockError);
 
       await expect(taskService.updateTask(999, { title: 'New Title' })).rejects.toThrow('Task not found');
+      consoleSpy.mockRestore();
     });
 
     it('should handle partial updates', async () => {
       const partialUpdate = { completed: true };
       const updatedTask = { ...mockTasks[0], completed: true };
 
-      axios.put.mockResolvedValue({ data: updatedTask });
+      mockApiClient.put.mockResolvedValue({ data: updatedTask });
 
       const result = await taskService.updateTask(1, partialUpdate);
 
-      expect(axios.put).toHaveBeenCalledWith('/tasks/1', partialUpdate);
+      expect(mockApiClient.put).toHaveBeenCalledWith('/tasks/1', partialUpdate);
       expect(result.completed).toBe(true);
     });
   });
@@ -144,30 +156,32 @@ describe('Task Service', () => {
   describe('deleteTask', () => {
     it('should delete a task', async () => {
       const deleteResponse = { message: 'Task deleted successfully', id: 1 };
-      axios.delete.mockResolvedValue({ data: deleteResponse });
+      mockApiClient.delete.mockResolvedValue({ data: deleteResponse });
 
       const result = await taskService.deleteTask(1);
 
-      expect(axios.delete).toHaveBeenCalledWith('/tasks/1');
+      expect(mockApiClient.delete).toHaveBeenCalledWith('/tasks/1');
       expect(result).toEqual(deleteResponse);
     });
 
     it('should handle errors when deleting task', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const mockError = new Error('Task not found');
-      axios.delete.mockRejectedValue(mockError);
+      mockApiClient.delete.mockRejectedValue(mockError);
 
       await expect(taskService.deleteTask(999)).rejects.toThrow('Task not found');
+      consoleSpy.mockRestore();
     });
   });
 
   describe('completeTask', () => {
     it('should mark task as complete', async () => {
       const completedTask = { ...mockTasks[0], completed: true };
-      axios.put.mockResolvedValue({ data: completedTask });
+      mockApiClient.put.mockResolvedValue({ data: completedTask });
 
       const result = await taskService.completeTask(1);
 
-      expect(axios.put).toHaveBeenCalledWith('/tasks/1', { completed: true });
+      expect(mockApiClient.put).toHaveBeenCalledWith('/tasks/1', { completed: true });
       expect(result.completed).toBe(true);
     });
   });
@@ -175,11 +189,11 @@ describe('Task Service', () => {
   describe('incompleteTask', () => {
     it('should mark task as incomplete', async () => {
       const incompletedTask = { ...mockTasks[1], completed: false };
-      axios.put.mockResolvedValue({ data: incompletedTask });
+      mockApiClient.put.mockResolvedValue({ data: incompletedTask });
 
       const result = await taskService.incompleteTask(2);
 
-      expect(axios.put).toHaveBeenCalledWith('/tasks/2', { completed: false });
+      expect(mockApiClient.put).toHaveBeenCalledWith('/tasks/2', { completed: false });
       expect(result.completed).toBe(false);
     });
   });
@@ -188,7 +202,7 @@ describe('Task Service', () => {
     it('should log errors to console', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const mockError = new Error('Test error');
-      axios.get.mockRejectedValue(mockError);
+      mockApiClient.get.mockRejectedValue(mockError);
 
       try {
         await taskService.getTasks();
